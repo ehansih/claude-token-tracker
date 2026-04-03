@@ -1,3 +1,15 @@
+<div align="center">
+
+# 💰 Claude Token Tracker
+
+Persistent token usage & budget tracker for the Anthropic Claude API — daily/monthly reports, auto model routing, history compression.
+
+![Python](https://img.shields.io/badge/python-3.8+-blue?logo=python) ![License](https://img.shields.io/github/license/ehansih/claude-token-tracker) ![Last Commit](https://img.shields.io/github/last-commit/ehansih/claude-token-tracker) ![Stars](https://img.shields.io/github/stars/ehansih/claude-token-tracker?style=social)
+
+</div>
+
+---
+
 # Claude Token Tracker
 
 Persistent token usage and budget tracker for the Anthropic Claude API.
