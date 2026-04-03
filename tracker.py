@@ -215,6 +215,27 @@ def count_tokens(text: str) -> int:
 def count_history_tokens(history: list) -> int:
     return sum(count_tokens(m["content"]) for m in history)
 
+def preflight_count_tokens(client, model: str, messages: list, system: str = "") -> dict:
+    """
+    Call /v1/messages/count_tokens before sending a message.
+    Returns {"input_tokens": N, "predicted_cost": $X} or falls back to estimate
+    if the API call fails (e.g. invalid key in tests).
+    Free to call — no tokens consumed, no rate-limit impact on message quota.
+    """
+    try:
+        kwargs = {"model": model, "messages": messages}
+        if system:
+            kwargs["system"] = system
+        result = client.messages.count_tokens(**kwargs)
+        input_tokens = result.input_tokens
+    except Exception:
+        # Fallback: rough estimate (4 chars ≈ 1 token)
+        input_tokens = count_history_tokens(messages)
+
+    cost_per_m = COSTS.get(model, {"in": 3.00, "out": 15.00})
+    predicted_cost = input_tokens / 1_000_000 * cost_per_m["in"]
+    return {"input_tokens": input_tokens, "predicted_cost": predicted_cost}
+
 def summarise_history(history: list, client) -> list:
     if len(history) < 4:
         return history
@@ -302,19 +323,33 @@ def main():
             print("  ⛔ Monthly budget exhausted. Use --reset to reset.")
             break
 
-        # Compress history if too large
-        if count_history_tokens(history) > SUMMARY_THRESHOLD:
-            history = summarise_history(history, client)
-
-        # Build messages
+        # Build messages + pick model
         history.append({"role": "user", "content": user_input})
         model = pick_model(user_input)
+        system_prompt = "You are a helpful assistant for Harsh Vardhan Singh Chauhan — telecom security expert."
+
+        # ── PREFLIGHT: count tokens before sending (free API call) ───────────
+        preflight = preflight_count_tokens(client, model, history, system_prompt)
+        monthly_used_now = data["monthly"].get(this_month, {}).get("cost", 0.0)
+        budget_left = MONTHLY_BUDGET - monthly_used_now
+        print(f"  📡 Preflight → ~{preflight['input_tokens']:,} input tokens | "
+              f"est. input cost ${preflight['predicted_cost']:.5f} | "
+              f"budget left ${budget_left:.4f}")
+
+        # Compress history if token count (from API) exceeds threshold
+        if preflight["input_tokens"] > SUMMARY_THRESHOLD:
+            history.pop()   # remove user msg before compressing
+            history = summarise_history(history, client)
+            history.append({"role": "user", "content": user_input})
+            # Recount after compression
+            preflight = preflight_count_tokens(client, model, history, system_prompt)
+            print(f"  📡 After compression → ~{preflight['input_tokens']:,} tokens")
 
         try:
             response = client.messages.create(
                 model=model,
                 max_tokens=MAX_OUTPUT_TOKENS,
-                system="You are a helpful assistant for Harsh Vardhan Singh Chauhan — telecom security expert.",
+                system=system_prompt,
                 messages=history
             )
         except Exception as e:

@@ -237,6 +237,71 @@ class TestHistorySummariser(unittest.TestCase):
         self.assertTrue(result[0]["content"].startswith("[Previous summary]"))
 
 
+class TestPreflightCountTokens(unittest.TestCase):
+
+    def test_uses_api_when_available(self):
+        mock_result = MagicMock()
+        mock_result.input_tokens = 500
+        mock_client = MagicMock()
+        mock_client.messages.count_tokens.return_value = mock_result
+
+        messages = [{"role": "user", "content": "hello"}]
+        result = T.preflight_count_tokens(mock_client, T.MODELS["cheap"], messages)
+
+        mock_client.messages.count_tokens.assert_called_once()
+        self.assertEqual(result["input_tokens"], 500)
+        # predicted cost = 500 / 1M * 0.80
+        self.assertAlmostEqual(result["predicted_cost"], 500 / 1_000_000 * 0.80, places=10)
+
+    def test_falls_back_on_api_error(self):
+        mock_client = MagicMock()
+        mock_client.messages.count_tokens.side_effect = Exception("no key")
+
+        messages = [{"role": "user", "content": "a" * 40}]  # 10 estimated tokens
+        result = T.preflight_count_tokens(mock_client, T.MODELS["cheap"], messages)
+
+        # Should not raise; should return estimate
+        self.assertIn("input_tokens", result)
+        self.assertIn("predicted_cost", result)
+        self.assertGreater(result["input_tokens"], 0)
+
+    def test_returns_dict_with_required_keys(self):
+        mock_result = MagicMock()
+        mock_result.input_tokens = 100
+        mock_client = MagicMock()
+        mock_client.messages.count_tokens.return_value = mock_result
+
+        result = T.preflight_count_tokens(mock_client, T.MODELS["normal"], [])
+        self.assertIn("input_tokens", result)
+        self.assertIn("predicted_cost", result)
+
+    def test_cost_scales_with_model(self):
+        def make_client(n):
+            r = MagicMock()
+            r.input_tokens = n
+            c = MagicMock()
+            c.messages.count_tokens.return_value = r
+            return c
+
+        msgs = [{"role": "user", "content": "test"}]
+        haiku  = T.preflight_count_tokens(make_client(1_000_000), T.MODELS["cheap"],    msgs)
+        sonnet = T.preflight_count_tokens(make_client(1_000_000), T.MODELS["normal"],   msgs)
+        opus   = T.preflight_count_tokens(make_client(1_000_000), T.MODELS["powerful"], msgs)
+
+        self.assertLess(haiku["predicted_cost"], sonnet["predicted_cost"])
+        self.assertLess(sonnet["predicted_cost"], opus["predicted_cost"])
+
+    def test_system_prompt_passed_to_api(self):
+        mock_result = MagicMock()
+        mock_result.input_tokens = 50
+        mock_client = MagicMock()
+        mock_client.messages.count_tokens.return_value = mock_result
+
+        T.preflight_count_tokens(mock_client, T.MODELS["cheap"], [], system="Be helpful.")
+        call_kwargs = mock_client.messages.count_tokens.call_args[1]
+        self.assertEqual(call_kwargs.get("system"), "Be helpful.")
+
+
 class TestBudgetGuards(unittest.TestCase):
 
     def setUp(self):
