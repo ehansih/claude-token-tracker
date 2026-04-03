@@ -234,10 +234,12 @@ def summarise_history(history: list, client) -> list:
     return compressed
 
 def pick_model(message: str) -> str:
+    import re
     msg = message.lower()
     simple = ["what is", "define", "hi", "hello", "thanks", "yes", "no", "ok", "sure"]
     hard   = ["architecture", "audit", "design system", "research", "analyse", "compare"]
-    if any(k in msg for k in simple) and len(message) < 80:
+    is_simple = any(re.search(r'\b' + re.escape(k) + r'\b', msg) for k in simple)
+    if is_simple and len(message) < 80:
         return MODELS["cheap"]
     if any(k in msg for k in hard):
         return MODELS["powerful"]

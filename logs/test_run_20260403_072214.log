@@ -1,0 +1,42 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/havardha/harsh-claude/claude-token-tracker/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/havardha/harsh-claude/claude-token-tracker
+plugins: anyio-4.13.0
+collecting ... collected 33 items
+
+tests/test_tracker.py::TestTokenCounter::test_count_history_tokens_empty PASSED [  3%]
+tests/test_tracker.py::TestTokenCounter::test_count_history_tokens_multiple PASSED [  6%]
+tests/test_tracker.py::TestTokenCounter::test_count_history_tokens_single PASSED [  9%]
+tests/test_tracker.py::TestTokenCounter::test_count_tokens_approximate PASSED [ 12%]
+tests/test_tracker.py::TestTokenCounter::test_count_tokens_empty PASSED  [ 15%]
+tests/test_tracker.py::TestModelRouter::test_architecture_uses_opus PASSED [ 18%]
+tests/test_tracker.py::TestModelRouter::test_complex_audit_uses_opus PASSED [ 21%]
+tests/test_tracker.py::TestModelRouter::test_long_simple_message_uses_sonnet PASSED [ 24%]
+tests/test_tracker.py::TestModelRouter::test_normal_task_uses_sonnet PASSED [ 27%]
+tests/test_tracker.py::TestModelRouter::test_short_what_is_uses_haiku PASSED [ 30%]
+tests/test_tracker.py::TestModelRouter::test_simple_greeting_uses_haiku PASSED [ 33%]
+tests/test_tracker.py::TestCostCalculation::test_haiku_cost_calculation PASSED [ 36%]
+tests/test_tracker.py::TestCostCalculation::test_opus_cost_calculation PASSED [ 39%]
+tests/test_tracker.py::TestCostCalculation::test_small_usage_cost PASSED [ 42%]
+tests/test_tracker.py::TestCostCalculation::test_sonnet_cost_calculation PASSED [ 45%]
+tests/test_tracker.py::TestCostCalculation::test_zero_tokens_zero_cost PASSED [ 48%]
+tests/test_tracker.py::TestPersistentStorage::test_data_file_created_on_save PASSED [ 51%]
+tests/test_tracker.py::TestPersistentStorage::test_json_valid_after_save PASSED [ 54%]
+tests/test_tracker.py::TestPersistentStorage::test_load_data_returns_empty_structure PASSED [ 57%]
+tests/test_tracker.py::TestPersistentStorage::test_multiple_calls_accumulate PASSED [ 60%]
+tests/test_tracker.py::TestPersistentStorage::test_record_usage_persists_daily PASSED [ 63%]
+tests/test_tracker.py::TestPersistentStorage::test_record_usage_persists_monthly PASSED [ 66%]
+tests/test_tracker.py::TestPersistentStorage::test_save_and_reload PASSED [ 69%]
+tests/test_tracker.py::TestHistorySummariser::test_compressed_history_has_summary_prefix PASSED [ 72%]
+tests/test_tracker.py::TestHistorySummariser::test_long_history_gets_compressed PASSED [ 75%]
+tests/test_tracker.py::TestHistorySummariser::test_short_history_not_compressed PASSED [ 78%]
+tests/test_tracker.py::TestBudgetGuards::test_budget_not_exceeded_when_empty PASSED [ 81%]
+tests/test_tracker.py::TestBudgetGuards::test_daily_accumulation_correct PASSED [ 84%]
+tests/test_tracker.py::TestBudgetGuards::test_monthly_accumulation_correct PASSED [ 87%]
+tests/test_tracker.py::TestModelsConfig::test_all_models_defined PASSED  [ 90%]
+tests/test_tracker.py::TestModelsConfig::test_all_models_have_costs PASSED [ 93%]
+tests/test_tracker.py::TestModelsConfig::test_haiku_cheapest PASSED      [ 96%]
+tests/test_tracker.py::TestModelsConfig::test_output_more_expensive_than_input PASSED [100%]
+
+============================== 33 passed in 0.97s ==============================
